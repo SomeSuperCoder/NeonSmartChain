@@ -19,14 +19,15 @@ class ProofOfStake:
                     address = tx.get_sender_address()
                     staker = stakers.get(address) or Staker(amount=0, time=1)
                     stakers[address] = Staker(amount=staker.amount+tx.amount, time=staker.time)
-                if tx.from_ == "stake":
-                    address = tx.get_sender_address()
-                    staker = stakers.get(address) or Staker(amount=0, time=1)
-                    stakers[address] = Staker(amount=staker.amount + tx.amount, time=staker.time)
+                    print(f"STAKE ADDING: {tx.amount}")
+                # if tx.from_ == "stake":
+                #     address = tx.get_sender_address()
+                #     staker = stakers.get(address) or Staker(amount=0, time=1)
+                #     stakers[address] = Staker(amount=staker.amount + tx.amount, time=staker.time)
 
             for address, staker in stakers.items():
                 stakers[address] = Staker(amount=staker.amount,
-                                                              time=staker.time+1)
+                                          time=staker.time+1)
 
             staker = stakers.get(block.get_creator_address()) or Staker(amount=0, time=1)
             stakers[block.get_creator_address()] = Staker(amount=staker.amount + staker.amount ** (1. / 5),
@@ -35,7 +36,7 @@ class ProofOfStake:
         result = {}
         # filer empty ones
         for address, staker in stakers.items():
-            if staker.amount > 0:
+            if staker.amount > 1:
                 result[address] = staker
 
         return result
@@ -65,7 +66,7 @@ class ProofOfStake:
 
 class Staker:
     def __init__(self, amount, time):
-        self.amount = amount
+        self.amount = round(amount, config.native_coin_decimals)
         self.time = time
 
     def calculate_weight(self):

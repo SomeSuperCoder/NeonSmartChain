@@ -27,9 +27,15 @@ class Validator:
             print("TX Validation failed: not enough money ;(")
             return False
 
-        if tx.from_ != "stake":
-            if not utils.verify(tx, tx.from_):
-                print("TX Validation failed: signature verification failed")
+        # signature check
+        if not utils.verify(tx, tx.from_):
+            print("TX Validation failed: signature verification failed")
+            return False
+
+        if tx.to != "stake":
+            # do the non-negative check
+            if tx.amount < 0 or tx.gas < 0:
+                print("TX Validation failed: negative numbers are forbidden")
                 return False
 
         # check decimals
@@ -38,20 +44,20 @@ class Validator:
             print("TX Validation failed: invalid amount of decimals")
             return False
 
-        # do the non-negative check
-        if tx.amount < 0 or tx.gas < 0:
-            print("TX Validation failed: negative numbers are forbidden")
-            return False
-
         # check tx id
         if tx.id != self.blockchain.get_latest_tx_id_for_address(address=tx.get_sender_address())+1:
             print("TX Validation failed: TX id does not match the required one")
-            return
+            return False
 
-        # check stake release amount
-        if tx.from_ == "stake":
-            if self.blockchain.pos.get_stake_info().get(tx.to) or 0 < tx.amount:
-                print("TX Validation failed: User is trying to release more stake than he has")
+        if tx.to == "stake" and tx.amount < 0:
+            # check stake release amount
+            try:
+                amount = self.blockchain.pos.get_stake_info().get(tx.get_sender_address()).amount
+            except:
+                amount = 0
+            if amount < abs(tx.amount):
+                print(f"He has: {amount}")
+                print("TX Validation failed: user is trying to release more stake than he has")
                 return False
 
         return True

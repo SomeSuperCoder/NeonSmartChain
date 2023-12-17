@@ -49,14 +49,16 @@ utils.sign(tx, capybara_pk)
 
 # print(blockchain.validator.validate_tx(tx))
 
-block = blockchain.create_new_block(tx_list=[], private_key=super_man_pk)
-blockchain.blocks.append(block)
+# block = blockchain.create_new_block(tx_list=[], private_key=super_man_pk)
+# blockchain.blocks.append(block)
+#
+# print(block.execute(blockchain=blockchain))
+#
+# info = blockchain.pos.get_stake_info()
+#
+# for address, staker in info.items():
+#     print(f"{address}: {staker.calculate_weight()} ({staker.amount} * {staker.time})")
+#
+# blockchain.save()
 
-print(block.execute(blockchain=blockchain))
-
-info = blockchain.pos.get_stake_info()
-
-for address, staker in info.items():
-    print(f"{address}: {staker.calculate_weight()} ({staker.amount} * {staker.time})")
-
-blockchain.save()
+print(blockchain.pos.get_stake_info())

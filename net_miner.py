@@ -31,6 +31,7 @@ tx_pool = []
 known_node_list = ["127.0.0.1"]
 current_validator = None
 slot = None
+prev_slot = None
 latest_used_slot = None
 
 
@@ -59,11 +60,13 @@ def new_transaction():
 
             tx_pool.append(tx)
             print("[bold green]Successfully added transaction too pool!")
-            broadcast_status = net_utils.broadcast_json_to_url(tx.serialize(), "/new_transaction", known_node_list)
+            filtered_known_node_list = [i for i in known_node_list if i != "127.0.0.1"]
+            broadcast_status = net_utils.broadcast_json_to_url(tx.serialize(), "/new_transaction", filtered_known_node_list)
             if broadcast_status:
                 print("[bold green]Successfully broadcasted transaction!")
             else:
                 print("[bold red]TX broadcast error")
+            return "Ok"
         except BaseException as e:
             print(f"{e.__class__.__name__}: {e}")
             print("[bold red]Error while validating transaction!")
@@ -120,7 +123,21 @@ def get_latest_tx_id_for_address():
     return str(blockchain.get_latest_tx_id_for_address(address=address))
 
 
+@app.route("/utils/stake_info")
+def stake_info():
+    args = request.args
+    address = args.get("address")
+    if not address:
+        return "Error: client did not specify account address. This is likely a problem with your wallet application"
+    try:
+        amount = blockchain.pos.get_stake_info().get(address).amount
+        return str(amount)
+    except AttributeError:
+        return str(0)
+
+
 def bg_miner():
+    global tx_pool
     while True:
         time.sleep(1)
         print("[bold sky_blue3]Scanning for new transactions...")
@@ -149,6 +166,7 @@ def bg_miner():
             some_new_block.execute(blockchain=blockchain)
             some_new_block.do_hash()
             net_utils.broadcast_json_to_url(some_new_block.serialize(), "/new_block", known_node_list)
+            tx_pool = []
 
 
 def bg_slot_counter():

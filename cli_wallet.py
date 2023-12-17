@@ -100,7 +100,7 @@ while True:
         case "send":
             to = input(f"Enter the receiver address: ")
             try:
-                amount = round(float(input("Amount")), config.native_coin_decimals)
+                amount = round(float(input("Amount: ")), config.native_coin_decimals)
             except:
                 print("[bold red]Error: that is not a number!")
                 break
@@ -116,3 +116,10 @@ while True:
                 message=message
             )
             net_utils.broadcast_json_to_url(send_tx.serialize(), url="/new_transaction", node_list=[node])
+        case "stake info":
+            try:
+                balance = net_utils.get_data_from_path(f"/utils/stake_info?address={address}", node)
+                print(f"Stake amount: {balance}")
+            except requests.exceptions.ConnectionError as e:
+                print(f"{e.__class__.__name__}: {e}")
+                print("[bold red]Network connection error")
