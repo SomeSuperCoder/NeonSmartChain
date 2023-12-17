@@ -33,6 +33,8 @@ class SmartContract:
             file.write(self.code)
         with open("message.json", "w") as file:
             file.write(message.serialize())
+        with open("message.json", "w") as file:
+            file.write(message.serialize())
 
         if self.language == "python":
             os.system("docker run --rm --name sc_run -v \"$(pwd)/result:/result\" -v \"$(pwd):/code:ro\" neon_vm")
