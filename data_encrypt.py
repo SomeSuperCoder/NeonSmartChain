@@ -44,17 +44,17 @@ def decrypt_text(encrypted_text, password):
     return decrypted_text.decode('utf-8')
 
 
-# def main():
-#     while True:
-#         text = input("Enter the text to encrypt: ")
-#         password = input("Enter the password: ")
-#
-#         encrypted_text = encrypt_text(text, password)
-#         print("Encrypted text:", encrypted_text)
-#
-#         decrypted_text = decrypt_text(encrypted_text, password)
-#         print("Decrypted text:", decrypted_text)
-#
-#
-# if __name__ == "__main__":
-#     main()
+def main():
+    while True:
+        text = input("Enter the text to encrypt: ")
+        password = input("Enter the password: ")
+
+        encrypted_text = encrypt_text(text, password)
+        print("Encrypted text:", encrypted_text)
+
+        decrypted_text = decrypt_text(encrypted_text, password)
+        print("Decrypted text:", decrypted_text)
+
+
+if __name__ == "__main__":
+    main()

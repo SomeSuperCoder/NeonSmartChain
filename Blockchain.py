@@ -12,9 +12,9 @@ from pos import ProofOfStake
 class Blockchain:
     def __init__(self, blocks=None):
         if blocks is None:
-            self.blocks = [self.create_genesis_block()]
+            self.blocks: list[Block] = [self.create_genesis_block()]
         else:
-            self.blocks = blocks
+            self.blocks: list[Block] = blocks
 
         self.stakers = {}
         self.pos: ProofOfStake = ProofOfStake(self)

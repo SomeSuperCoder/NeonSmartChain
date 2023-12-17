@@ -1,3 +1,5 @@
+from copy import copy
+
 from Transaction import Transaction
 from Block import Block
 
@@ -55,6 +57,12 @@ class Validator:
         return True
 
     def validate_block(self, block: Block):
+        a_copy = copy(block)
+        a_copy.do_hash()
+        if block.hash != a_copy.hash:
+            print("Block Validation failed: wrong hash")
+            return False
+
         if block.prev_hash != self.blockchain.get_latest_block_hash():
             print("Block Validation failed: prev_hash does not match blockchain latest hash")
             return False
@@ -63,7 +71,7 @@ class Validator:
             print("Block Validation failed: block id does not match the required one")
             return False
 
-        if utils.verify(block, block.creator):
+        if not utils.verify(block, block.creator):
             print("Block Validation failed: signature verification failed")
             return False
 
@@ -73,3 +81,6 @@ class Validator:
 
         if block.results != block.execute(self.blockchain.get_slice(block.id)):
             print("Block Validation failed: block code execution results do not match the ones sent by the miner")
+            return False
+
+        return True

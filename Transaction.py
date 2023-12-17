@@ -19,7 +19,7 @@ class Transaction:
     def get_sender_address(self):
         return utils.generate_address(self.from_)
 
-    def serialize(self, include_signature=True):
+    def serialize(self, include_signature=True, include_hash=False):
         return {
             "id": self.id,
             "from_": utils.public_key_to_string(self.from_),

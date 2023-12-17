@@ -41,8 +41,10 @@ def send(id, private_key: ecdsa.SigningKey, to, amount, message):
 # ecdsa stuff
 
 def sign(target, private_key):
-    signature = private_key.sign_deterministic(json.dumps(target.serialize(include_signature=False)).encode())
-    # print(signature)
+    print(f"Signing: {json.dumps(target.serialize(include_signature=False))}")
+    print(f"With: {private_key.get_verifying_key()}")
+    signature = private_key.sign_deterministic(json.dumps(target.serialize(include_signature=False, include_hash=False)).encode())
+    print(signature)
     signature_string = base58.b58encode(signature).decode()
 
     target.signature = signature_string
@@ -51,9 +53,10 @@ def sign(target, private_key):
 def verify(target, public_key):
     try:
         signature_bytes = base58.b58decode(target.signature.encode())
-        # print(signature_bytes)
-
-        is_valid = public_key.verify(signature_bytes, json.dumps(target.serialize(include_signature=False)).encode())
+        print(signature_bytes)
+        print(f"Verifying: {json.dumps(target.serialize(include_signature=False))}")
+        print(f"With: {public_key}")
+        is_valid = public_key.verify(signature_bytes, json.dumps(target.serialize(include_signature=False, include_hash=False)).encode())
 
         return is_valid
     except ecdsa.BadSignatureError as e:

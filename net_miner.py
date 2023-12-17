@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import threading
 import time
 
@@ -15,17 +16,22 @@ import net_utils
 
 print("[bold green] Miner started")
 
-miner_private_key = utils.private_key_from_seed_phrase("capybara")
-
+miner_private_key = utils.private_key_from_seed_phrase(
+    "diamond draft index outer mix frost teach master ritual round junk gloom"
+)
 
 app = Flask(__name__)
 
-blockchain = Blockchain()
-blockchain.load()
+if os.path.isfile("blockchain.json"):
+    blockchain = Blockchain().load()
+else:
+    blockchain = Blockchain()
+
 tx_pool = []
-known_node_list = []
+known_node_list = ["127.0.0.1"]
 current_validator = None
 slot = None
+latest_used_slot = None
 
 
 @app.route("/")
@@ -35,6 +41,7 @@ def index():
 
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
+    print("[bold green]New transaction!")
     data = request.json
 
     if data is not None:
@@ -45,8 +52,7 @@ def new_transaction():
             return "Error"
 
         try:
-            is_valid = not blockchain.validator.transaction_is_fraudulent(blockchain=blockchain,
-                                                                          transaction=tx)
+            is_valid = blockchain.validator.validate_tx(tx)
             if not is_valid:
                 print("[bold red]Transaction is fraudulent")
                 return "Fraudulent transaction"
@@ -58,7 +64,8 @@ def new_transaction():
                 print("[bold green]Successfully broadcasted transaction!")
             else:
                 print("[bold red]TX broadcast error")
-        except:
+        except BaseException as e:
+            print(f"{e.__class__.__name__}: {e}")
             print("[bold red]Error while validating transaction!")
             return "Error"
     else:
@@ -72,21 +79,45 @@ def new_block():
     validate the block using the method of the Validator class and
     vote fot it you think it's valid
     """
-
+    print("[bold green]New block")
     data = request.json
 
     if data is not None:
         try:
             block = Block.from_dict(data)
-            block_is_valid = blockchain.validator.validate_block(blockchain, block)
+            print(f"Hash: {block.hash}")
+            block_is_valid = blockchain.validator.validate_block(block)
             if not block_is_valid:
                 print("[bold red]Block is invalid")
-                blockchain.blocks.append(block)
-        except:
+
+            blockchain.blocks.append(block)
+            blockchain.save()
+
+            return "Ok"
+        except BaseException as e:
+            print(f"{e.__class__.__name__}: {e}")
             print("[bold red]Error loading block. Skipping")
             return "Error"
     else:
         return "Client sent no data"
+
+
+@app.route("/utils/balance_of")
+def balance_of():
+    args = request.args
+    address = args.get("address")
+    if not address:
+        return "Error: client did not specify account address. This is likely a problem with your wallet application"
+    return str(utils.get_balance(blockchain, address))
+
+
+@app.route("/utils/get_latest_tx_id_for_address")
+def get_latest_tx_id_for_address():
+    args = request.args
+    address = args.get("address")
+    if not address:
+        return "Error: client did not specify account address. This is likely a problem with your wallet application"
+    return str(blockchain.get_latest_tx_id_for_address(address=address))
 
 
 def bg_miner():
@@ -97,26 +128,33 @@ def bg_miner():
         print(f"Validator: {validator}")
 
         if utils.generate_address(miner_private_key.get_verifying_key()) == validator:
-            # TODO: add double spending protection
+            global latest_used_slot
+            if latest_used_slot == slot:
+                continue
+            latest_used_slot = slot
+            print("[bold green]Adding a block!")
+            # double spending protection
             result_pool = []
             tmp_blockchain = copy.copy(blockchain)
             empty_block = tmp_blockchain.create_new_block([], miner_private_key)
             tmp_blockchain.blocks.append(empty_block)
             for tx in tx_pool:
-                tmp_block = blockchain.blocks.pop()
-                tmp_block.tx_list.append(tx)
-                if blockchain.
+                if tmp_blockchain.validator.validate_tx(tx):
+                    tmp_blockchain.blocks[-1].tx_list.append(tx)
+                    result_pool.append(tx)
 
             # create the new block it self
-            some_new_block = blockchain.create_new_block(tx_list=tx_pool,
+            some_new_block = blockchain.create_new_block(tx_list=[],
                                                          private_key=miner_private_key)
-            some_new_block.execute()
-            net_utils.broadcast_json_to_url(json.loads(new_block.serialize()), "/new_block", some_new_block)
+            some_new_block.execute(blockchain=blockchain)
+            some_new_block.do_hash()
+            net_utils.broadcast_json_to_url(some_new_block.serialize(), "/new_block", known_node_list)
 
 
 def bg_slot_counter():
     global slot
     global prev_slot
+
     prev_slot = None
     while True:
         prev_slot = slot
@@ -125,8 +163,11 @@ def bg_slot_counter():
             print(f"Slot: {slot}")
 
 
-thread2 = threading.Thread(target=bg_slot_counter)
-thread2.start()
-thread = threading.Thread(target=bg_miner)
-thread.start()
-app.run(debug=False, port=config.node_port)
+try:
+    thread2 = threading.Thread(target=bg_slot_counter)
+    thread2.start()
+    thread = threading.Thread(target=bg_miner)
+    thread.start()
+    app.run(debug=False, port=config.node_port)
+except KeyboardInterrupt:
+    blockchain.save()

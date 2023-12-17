@@ -8,9 +8,12 @@ def send_json_to_path(data, path, node_ip):
     return response.text
 
 
-def get_json_from_path(path, node_ip):
+def get_data_from_path(path, node_ip, json=False):
     response = requests.get(concatenate_url(node_ip, config.node_port, path))
-    return response.json()
+    if json:
+        return response.json()
+    else:
+        return response.text
 
 
 def broadcast_json_to_url(data, url, node_list):

@@ -45,7 +45,8 @@ class Block:
             prev_hash=source.get("prev_hash"),
             creator=utils.public_key_from_string(source.get("creator")),
             signature=source.get("signature"),
-            results=source.get("results")
+            results=source.get("results"),
+            hash=source.get("hash")
         )
 
     def execute(self, blockchain, set=False):
@@ -71,4 +72,4 @@ class Block:
         return the_result
 
     def do_hash(self):
-        self.hash = hashlib.sha256(json.dumps(self.serialize(include_hash=False)).encode()).hexdigest()
+        self.hash = hashlib.sha256(json.dumps(self.serialize(include_hash=False, include_signature=False)).encode()).hexdigest()
