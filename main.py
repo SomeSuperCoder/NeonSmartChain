@@ -6,7 +6,7 @@ from rich import print
 import utils
 
 capybara_pk = utils.private_key_from_seed_phrase(
-    "capybara"
+    "diamond draft index outer mix frost teach master ritual round junk gloom"
 )
 capybara_vk = capybara_pk.get_verifying_key()
 capybara_address = utils.generate_address(capybara_vk)
@@ -38,21 +38,25 @@ sc = SmartContract(sc_code)
 
 tx = Transaction(
     id=blockchain.get_latest_tx_id_for_address(address=capybara_address)+1,
-    from_=capybara_vk,
-    to="0xHzfdXfZLsyDWwCoDQuowLrdwoGuKReGdNxdE1p56Crxx",
-    amount=0,
+    from_=super_man_vk,
+    to="stake",
+    amount=10,
     gas=0,
-    contract=sc,
     message="set~super=cool"
 )
 utils.sign(tx, capybara_pk)
-print(tx.execute(blockchain=blockchain))
+# print(tx.execute(blockchain=blockchain))
 
-print(blockchain.validator.validate_tx(tx))
+# print(blockchain.validator.validate_tx(tx))
 
-block = blockchain.create_new_block(tx_list=[tx], private_key=super_man_pk)
+block = blockchain.create_new_block(tx_list=[], private_key=super_man_pk)
 blockchain.blocks.append(block)
 
-# print(block)
+print(block.execute(blockchain=blockchain))
 
-# blockchain.save()
+info = blockchain.pos.get_stake_info()
+
+for address, staker in info.items():
+    print(f"{address}: {staker.calculate_weight()} ({staker.amount} * {staker.time})")
+
+blockchain.save()

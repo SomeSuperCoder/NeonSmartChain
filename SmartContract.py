@@ -95,11 +95,12 @@ class ExecMessage:
 
 
 class ExecResult:
-    def __init__(self, return_data, eoa_transfers, other_sc_calls, new_storage: dict):
+    def __init__(self, return_data, eoa_transfers, other_sc_calls, new_storage: dict, creator=None):
         self.return_data = return_data
         self.eoa_transfers = eoa_transfers
         self.other_sc_calls = other_sc_calls
         self.new_storage = new_storage
+        self.creator = creator
 
     def serialize(self):
         return json.dumps(
@@ -107,7 +108,8 @@ class ExecResult:
                 "return_data": self.return_data,
                 "new_transactions": self.eoa_transfers,
                 "other_sc_calls": self.other_sc_calls,
-                "new_storage": self.new_storage
+                "new_storage": self.new_storage,
+                "creator": self.creator
             }
         )
 
@@ -117,5 +119,6 @@ class ExecResult:
             return_data=source.get("return_data"),
             eoa_transfers=source.get("eoa_transfers"),
             other_sc_calls=source.get("other_sc_calls"),
-            new_storage=source.get("new_storage")
+            new_storage=source.get("new_storage"),
+            creator=source.get("creator")
         )

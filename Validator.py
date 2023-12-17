@@ -9,14 +9,26 @@ class Validator:
     def __init__(self, blockchain):
         self.blockchain = blockchain
 
+    def validate(self):
+        from Blockchain import Blockchain
+        partial_blockchain = Blockchain()
+        for block in self.blockchain.blocks:
+            if not partial_blockchain.validator.validate_tx(block):
+                return False
+
+            partial_blockchain.blocks.append(block)
+
+        return True
+
     def validate_tx(self, tx: Transaction):
         if tx.amount + tx.gas > utils.get_balance(blockchain=self.blockchain, address=tx.get_sender_address()):
             print("TX Validation failed: not enough money ;(")
             return False
 
-        if not utils.verify(tx, tx.from_):
-            print("TX Validation failed: signature verification failed")
-            return False
+        if tx.from_ != "stake":
+            if not utils.verify(tx, tx.from_):
+                print("TX Validation failed: signature verification failed")
+                return False
 
         # check decimals
         if str(round(tx.amount, config.native_coin_decimals)) != str(tx.amount) or\
@@ -33,6 +45,12 @@ class Validator:
         if tx.id != self.blockchain.get_latest_tx_id_for_address(address=tx.get_sender_address())+1:
             print("TX Validation failed: TX id does not match the required one")
             return
+
+        # check stake release amount
+        if tx.from_ == "stake":
+            if self.blockchain.pos.get_stake_info().get(tx.to) or 0 < tx.amount:
+                print("TX Validation failed: User is trying to release more stake than he has")
+                return False
 
         return True
 
@@ -53,8 +71,5 @@ class Validator:
             print("Block Validation failed: block contains a fraudulent TX!")
             return False
 
-    def validate_sc_to_eoa_tx(self):
-        pass
-
-    def validate_sc_to_sc_tx(self):
-        pass
+        if block.results != block.execute(self.blockchain.get_slice(block.id)):
+            print("Block Validation failed: block code execution results do not match the ones sent by the miner")

@@ -8,7 +8,7 @@ import Transaction
 
 def get_balance(blockchain, address):
     balance = 0
-    for tx in blockchain.get_tx_list():
+    for tx in blockchain.get_full_tx_list():
         tx: Transaction.Transaction = tx
         if tx.to == address:
             balance += tx.amount
@@ -17,7 +17,7 @@ def get_balance(blockchain, address):
             balance -= tx.gas
 
     if address == "0x7Cmg3rA1FSvho4acs6fFeZrPXhEHo2h99T1xMnodwn6o":
-        balance += 1000
+        balance += 10_000
 
     return balance
 
@@ -41,7 +41,7 @@ def send(id, private_key: ecdsa.SigningKey, to, amount, message):
 # ecdsa stuff
 
 def sign(target, private_key):
-    signature = private_key.sign_deterministic(json.dumps(target.serialize(False)).encode())
+    signature = private_key.sign_deterministic(json.dumps(target.serialize(include_signature=False)).encode())
     # print(signature)
     signature_string = base58.b58encode(signature).decode()
 
@@ -53,7 +53,7 @@ def verify(target, public_key):
         signature_bytes = base58.b58decode(target.signature.encode())
         # print(signature_bytes)
 
-        is_valid = public_key.verify(signature_bytes, json.dumps(target.serialize(False)).encode())
+        is_valid = public_key.verify(signature_bytes, json.dumps(target.serialize(include_signature=False)).encode())
 
         return is_valid
     except ecdsa.BadSignatureError as e:

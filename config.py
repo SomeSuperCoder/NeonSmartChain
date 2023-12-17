@@ -3,7 +3,9 @@ gas_units_per_sc_exec_second = 20
 tx_gas_price = 0.01
 native_coin_decimals = 2
 stake_amount_weight = 2.5
-stake_time_weight = 1.5
+stake_time_weight = 1.2
+slot_length = 5  # seconds
+node_port = 3152
 
 
 # SmartContract code stuff

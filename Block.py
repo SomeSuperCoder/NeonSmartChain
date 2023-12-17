@@ -18,21 +18,16 @@ class Block:
         self.prev_hash = prev_hash
         self.creator = creator
         self.signature = signature
-        self.hash = None
+        self.hash = hash
 
-        if hash is None:
-            self.hash = hashlib.sha256(str(self).encode()).hexdigest()
-        else:
-            self.hash = hash
-
-    def serialize(self, strict=True):
+    def serialize(self, include_signature=True, include_hash=True):
         return {
             "id": self.id,
             "tx_list": [i.serialize() for i in self.tx_list],
             "prev_hash": self.prev_hash,
             "creator": utils.public_key_to_string(self.creator),
-            "signature": self.signature if strict else None,
-            "hash": self.hash if strict else None,
+            "signature": self.signature if include_signature else None,
+            "hash": self.hash if include_hash else None,
             "results": self.results
         }
 
@@ -62,3 +57,18 @@ class Block:
         if set:
             self.results = results
         return results
+
+    def get_full_tx_list(self):
+        the_result = []
+        for tx in self.tx_list:
+            the_result.append(tx)
+        for result in self.results:
+            for eoa_transafer in result.eoa_transfers:
+                the_result.append(eoa_transafer)
+            for other_sc_call in result.other_sc_calls:
+                the_result.append(other_sc_call)
+
+        return the_result
+
+    def do_hash(self):
+        self.hash = hashlib.sha256(json.dumps(self.serialize(include_hash=False)).encode()).hexdigest()

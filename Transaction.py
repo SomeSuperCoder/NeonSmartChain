@@ -1,7 +1,7 @@
 import json
 import ecdsa
 
-from SmartContract import SmartContract, ExecMessage, ExecResult
+# from SmartContract import SmartContract, ExecMessage, ExecResult
 import utils
 
 
@@ -19,7 +19,7 @@ class Transaction:
     def get_sender_address(self):
         return utils.generate_address(self.from_)
 
-    def serialize(self, strict=True):
+    def serialize(self, include_signature=True):
         return {
             "id": self.id,
             "from_": utils.public_key_to_string(self.from_),
@@ -27,8 +27,8 @@ class Transaction:
             "amount": self.amount,
             "gas": self.gas,
             "message": self.message,
-            "contract": self.contract.serialize(),
-            "signature": self.signature if strict else None
+            "contract": self.contract.serialize() if self.contract else None,
+            "signature": self.signature if include_signature else None
         }
 
     def __str__(self):
@@ -36,6 +36,7 @@ class Transaction:
 
     @classmethod
     def from_dict(cls, source: dict):
+        from SmartContract import SmartContract, ExecMessage, ExecResult
         return cls(
             id=source.get("id"),
             from_=utils.public_key_from_string(source.get("from_")),
@@ -43,11 +44,12 @@ class Transaction:
             amount=source.get("amount"),
             gas=source.get("gas"),
             message=source.get("message"),
-            contract=SmartContract.from_dict(source.get("contract")),
+            contract=SmartContract.from_dict(source.get("contract")) if source.get("contract") else None,
             signature=source.get("signature")
         )
 
     def execute(self, blockchain):
+        from SmartContract import SmartContract, ExecMessage, ExecResult
         call_stack = [self]
         results: list[ExecResult] = []
 
@@ -59,6 +61,7 @@ class Transaction:
                                       amount=the_call.amount,
                                       storage=blockchain.get_sc_storage(the_call.to))
                 result = sc.execute(message)
+                result.creator = the_call.to
                 results.append(result)
 
                 for sc_call in result.other_sc_calls:

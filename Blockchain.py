@@ -1,6 +1,5 @@
 import json
 
-import SmartContract
 import utils
 import ecdsa
 
@@ -18,14 +17,14 @@ class Blockchain:
             self.blocks = blocks
 
         self.stakers = {}
-        self.pos = ProofOfStake(self)
+        self.pos: ProofOfStake = ProofOfStake(self)
         self.poh = None
         self.validator = Validator(self)
 
-    def get_tx_list(self) -> list[Transaction]:
+    def get_full_tx_list(self) -> list[Transaction]:
         result = []
         for block in self.blocks:
-            for tx in block.tx_list:
+            for tx in block.get_full_tx_list():
                 result.append(tx)
 
         return result
@@ -37,6 +36,7 @@ class Blockchain:
             prev_hash=self.get_latest_block_hash(),
             creator=private_key.get_verifying_key()
         )
+        new_block.do_hash()
         utils.sign(new_block, private_key)
 
         return new_block
@@ -51,6 +51,8 @@ class Blockchain:
             prev_hash="0"*64,
             creator=creator_vk
         )
+        print(new_block)
+        new_block.do_hash()
         utils.sign(new_block, creator_pk)
         return new_block
 
@@ -75,7 +77,7 @@ class Blockchain:
         return json.dumps(self.serialize(), indent=4)
 
     def get_latest_tx_id_for_address(self, address):
-        tx_list = self.get_tx_list()
+        tx_list = self.get_full_tx_list()
         tx_list.reverse()
         for tx in tx_list:
             tx: Transaction = tx
@@ -88,7 +90,8 @@ class Blockchain:
         for block in self.blocks.__reversed__():
             storage = None
             for result in block.results:
-                result: SmartContract.ExecResult
+                from SmartContract import ExecResult
+                result: ExecResult
                 if result.creator == address:
                     storage = result.new_storage
             if storage:
@@ -97,7 +100,7 @@ class Blockchain:
         return {}
 
     def get_sc_by_address(self, address):
-        for tx in self.get_tx_list():
+        for tx in self.get_full_tx_list():
             if tx.contract is not None:
                 if tx.contract.address == address:
                     return tx.contract
@@ -112,3 +115,8 @@ class Blockchain:
     @classmethod
     def load(cls, filename="blockchain.json"):
         return cls.load_from_string(open(filename, "r").read())
+
+    def get_slice(self, until_block, inclusive=False):
+        return self.__class__(
+            self.blocks[0:until_block+int(inclusive)]
+        )
