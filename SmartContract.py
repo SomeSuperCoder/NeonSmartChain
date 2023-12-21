@@ -1,3 +1,4 @@
+import hashlib
 import json
 import base58
 import config
@@ -7,7 +8,7 @@ import Transaction
 
 
 class SmartContract:
-    def __init__(self, code, language="python", nonce=0, docs=""):
+    def __init__(self, code, tx_id, tx_sender, language="python", nonce=0, docs=""):
         self.nonce = nonce
         self.raw_code = code
 
@@ -20,9 +21,16 @@ class SmartContract:
         else:
             self.code = ""
 
+        self.tx_id = tx_id
+        self.tx_sender = tx_sender
+
         self.docs = docs
         self.language = language
-        self.address = utils.generate_serializable_address(self)
+        self.address = "0x" + base58.b58encode(
+                hashlib.sha256(
+                    f"{tx_id}{tx_sender}".encode()
+                ).digest()
+            ).decode()
 
         print("The code is:")
         print(self.code)
@@ -52,12 +60,13 @@ class SmartContract:
             }
 
     @staticmethod
-    def from_dict(source):
+    def from_dict(source, tx_id, tx_sender):
         return SmartContract(
-                code=base58.b58decode(source.get("code")).decode(),
-                docs=source.get("docs"),
-                nonce=source.get("nonce"),
-                language=source.get("language")
+            code=base58.b58decode(source.get("code")).decode(),
+            docs=source.get("docs"),
+            language=source.get("language"),
+            tx_id=tx_id,
+            tx_sender=tx_sender
         )
 
     def __str__(self):
@@ -97,13 +106,14 @@ class ExecMessage:
 
 
 class ExecResult:
-    def __init__(self, return_data, eoa_transfers, other_sc_calls, new_storage: dict, creator=None, initiator=None):
+    def __init__(self, return_data, eoa_transfers, other_sc_calls, new_storage: dict, creator=None, initiator=None, initiator_id=None):
         self.return_data = return_data
         self.eoa_transfers = eoa_transfers
         self.other_sc_calls = other_sc_calls
         self.new_storage = new_storage
         self.creator = creator
         self.initiator = initiator
+        self.initiator_id = initiator_id
 
     def serialize(self):
         return json.dumps(
@@ -113,7 +123,8 @@ class ExecResult:
                 "other_sc_calls": self.other_sc_calls,
                 "new_storage": self.new_storage,
                 "creator": self.creator,
-                "initiator": self.initiator
+                "initiator": self.initiator,
+                "initiator_id": self.initiator_id
             }
         )
 
@@ -125,5 +136,6 @@ class ExecResult:
             other_sc_calls=source.get("other_sc_calls"),
             new_storage=source.get("new_storage"),
             creator=source.get("creator"),
-            initiator=source.get("initiator")
+            initiator=source.get("initiator"),
+            initiator_id=source.get("initiator_id")
         )

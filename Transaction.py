@@ -15,6 +15,7 @@ class Transaction:
         self.message = message
         self.signature = signature
         self.contract = contract
+        self.parent_block = None
 
     def get_sender_address(self):
         return utils.generate_address(self.from_)
@@ -35,7 +36,7 @@ class Transaction:
         return json.dumps(self.serialize())
 
     @classmethod
-    def from_dict(cls, source: dict):
+    def from_dict(cls, source: dict, parent_block=None):
         from SmartContract import SmartContract, ExecMessage, ExecResult
         return cls(
             id=source.get("id"),
@@ -44,7 +45,9 @@ class Transaction:
             amount=source.get("amount"),
             gas=source.get("gas"),
             message=source.get("message"),
-            contract=SmartContract.from_dict(source.get("contract")) if source.get("contract") else None,
+            contract=SmartContract.from_dict(source.get("contract"),
+                                             source.get("id"),
+                                             utils.public_key_from_string(source.get("from_"))) if source.get("contract") else None,
             signature=source.get("signature")
         )
 
@@ -63,6 +66,7 @@ class Transaction:
                 result = sc.execute(message)
                 result.creator = the_call.to
                 result.initiator = the_call.from_
+                results.initiator_id = the_call.id
                 results.append(result)
 
                 for sc_call in result.other_sc_calls:

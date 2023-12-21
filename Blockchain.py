@@ -120,3 +120,22 @@ class Blockchain:
         return self.__class__(
             self.blocks[0:until_block+int(inclusive)]
         )
+
+    def get_tx_by_props(self, sender, id=0):
+        for tx in self.get_full_tx_list():
+            if tx.id == id and tx.get_sender_address() == sender:
+                return tx
+
+    def get_result_list(self):
+        result = []
+        for block in self.blocks:
+            for res in block.results:
+                result.append(res)
+
+        return result
+
+    def get_result_by_props(self, sender, id, contract):
+        res_list = self.get_result_list()
+        for res in res_list:
+            if res.initiator == sender and res.creator == contract and res.initiator_id == id:
+                return res

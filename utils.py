@@ -72,12 +72,12 @@ def generate_address(public_key: ecdsa.VerifyingKey):
     ).decode()
 
 
-def generate_serializable_address(target):
-    return "0x" + base58.b58encode(
-        hashlib.sha256(
-            json.dumps(target.serialize(False)).encode()
-        ).digest()
-    ).decode()
+# def generate_serializable_address(target):
+#     return "0x" + base58.b58encode(
+#         hashlib.sha256(
+#             json.dumps(target.serialize(False)).encode()
+#         ).digest()
+#     ).decode()
 
 
 def private_key_from_seed_phrase(string):
