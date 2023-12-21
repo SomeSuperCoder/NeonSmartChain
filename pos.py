@@ -2,7 +2,7 @@ import random
 import config
 import utils
 
-from Transaction import Transaction
+# from Transaction import Transaction
 
 
 class ProofOfStake:
@@ -71,6 +71,6 @@ class Staker:
 
     def calculate_weight(self):
         return round(utils.slow_growth_multiplication(self.amount,
-                                                self.time,
-                                                config.stake_amount_weight,
-                                                config.stake_time_weight))
+                                                      self.time,
+                                                      config.stake_amount_weight,
+                                                      config.stake_time_weight))

@@ -92,6 +92,8 @@ def new_block():
             block_is_valid = blockchain.validator.validate_block(block)
             if not block_is_valid:
                 print("[bold red]Block is invalid")
+            if block.get_creator_address() != current_validator:
+                print("[bold red]Wrong block validator!")
 
             blockchain.blocks.append(block)
             blockchain.save()
@@ -136,6 +138,33 @@ def stake_info():
         return str(0)
 
 
+@app.route("/utils/tx_info")
+def tx_info():
+    args = request.args
+    address = args.get("address")
+    tx_id = args.get("id")
+    print(f"ARGS: {address}{tx_id}")
+
+    if not address or not tx_id:
+        return "Error: client did not specify account address or TX id. This is likely a problem with your wallet application"
+
+    tx_list = blockchain.get_full_tx_list()
+    the_tx = None
+    for tx in tx_list:
+        print(f"THE ADDRESS: {tx.get_sender_address()} {address} {tx.get_sender_address() == address} THE ID: {tx.id} ({tx_id}) {int(tx.id) == int(tx_id)}")
+        if tx.get_sender_address() == address and int(tx.id) == int(tx_id):
+            the_tx = tx
+
+    if the_tx:
+        return {
+            "status": "confirmed"
+        }
+    else:
+        return {
+            "status": "unconfirmed"
+        }
+
+
 def bg_miner():
     global tx_pool
     while True:
@@ -172,6 +201,7 @@ def bg_miner():
 def bg_slot_counter():
     global slot
     global prev_slot
+    global current_validator
 
     prev_slot = None
     while True:
@@ -179,6 +209,7 @@ def bg_slot_counter():
         slot = divmod(time.time(), config.slot_length)[0]
         if slot != prev_slot:
             print(f"Slot: {slot}")
+            current_validator = blockchain.pos.select_random_validator(f"{slot}")
 
 
 try:

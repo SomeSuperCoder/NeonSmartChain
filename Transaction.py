@@ -62,6 +62,7 @@ class Transaction:
                                       storage=blockchain.get_sc_storage(the_call.to))
                 result = sc.execute(message)
                 result.creator = the_call.to
+                result.initiator = the_call.from_
                 results.append(result)
 
                 for sc_call in result.other_sc_calls:
@@ -81,6 +82,10 @@ class ScToEOA:
         self.to = to
         self.amount = amount
         self.message = message
+        self.id = 0
+        self.gas = 0
+        self.signature = None
+        self.contract = None
 
     def serialize(self, strict=True):
         return {

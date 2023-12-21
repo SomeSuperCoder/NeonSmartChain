@@ -19,7 +19,7 @@ def get_balance(blockchain, address):
     if address == "0x7Cmg3rA1FSvho4acs6fFeZrPXhEHo2h99T1xMnodwn6o":
         balance += 10_000
 
-    return balance
+    return round(balance, config.native_coin_decimals)
 
 
 def send(id, private_key: ecdsa.SigningKey, to, amount, message):

@@ -105,8 +105,12 @@ while True:
                 print("[bold red]Error: that is not a number!")
                 break
 
-            index = int(net_utils.get_data_from_path(f"/utils/get_latest_tx_id_for_address?address={address}", node))
-
+            try:
+                index = int(net_utils.get_data_from_path(f"/utils/get_latest_tx_id_for_address?address={address}", node))
+            except requests.exceptions.ConnectionError as e:
+                print(f"{e.__class__.__name__}: {e}")
+                print("[bold red]Network connection error")
+                break
             message = input("Enter a message: ")
             send_tx = utils.send(
                 id=index+1,
@@ -115,7 +119,16 @@ while True:
                 amount=amount,
                 message=message
             )
-            net_utils.broadcast_json_to_url(send_tx.serialize(), url="/new_transaction", node_list=[node])
+            try:
+                net_utils.broadcast_json_to_url(send_tx.serialize(), url="/new_transaction", node_list=[node])
+            except requests.exceptions.ConnectionError as e:
+                print(f"{e.__class__.__name__}: {e}")
+                print("[bold red]Network connection error")
+                break
+            print("Waiting for TX confirmation...")
+            while net_utils.get_data_from_path(f"/utils/tx_info?address={address}&id={index+1}", node, json=True).get("status") != "confirmed":
+                continue
+            print("[bold green]Done!")
         case "stake info":
             try:
                 balance = net_utils.get_data_from_path(f"/utils/stake_info?address={address}", node)
