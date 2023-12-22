@@ -78,7 +78,6 @@ class Transaction:
 
         return results
 
-
 # these can be only created by smart contracts
 class ScToEOA:
     def __init__(self, from_, to, amount, message=""):

@@ -1,8 +1,14 @@
 import copy
 import json
+import math
 import os
+import platform
+import random
+import subprocess
 import threading
 import time
+
+import requests
 
 import utils
 from Blockchain import Blockchain
@@ -33,6 +39,8 @@ current_validator = None
 slot = None
 prev_slot = None
 latest_used_slot = None
+random_num = 0
+vote_list = []
 
 
 @app.route("/")
@@ -165,6 +173,47 @@ def tx_info():
         }
 
 
+def check_if_ip_is_me(ip):
+    global random_num
+    results = []
+    for i in range(5):
+        random_num = random.randint(-int(math.pow(10, 308)), int(math.pow(10, 308)))
+        if net_utils.get_data_from_path("/i_am", ip) == str(random_num):
+            results.append(True)
+        else:
+            results.append(False)
+
+    return all(results)
+
+
+@app.route("/add_to_node_list")
+def add_to_node_list():
+    args = request.args
+    ip = args.get("ip")
+    try:
+        if not ip:
+            return "Error: client did not specify node ip"
+
+        if check_if_ip_is_me(ip):
+            return "Error: can't add my self"
+
+        if ping(ip):
+            known_node_list.append(ip)
+    except requests.exceptions.ConnectionError:
+        return "Connection error"
+
+
+@app.route("/i_am")
+def i_am():
+    global random_num
+    return str(random_num)
+
+
+@app.route("/get_known_node_list")
+def get_known_node_list():
+    return known_node_list
+
+
 def bg_miner():
     global tx_pool
     while True:
@@ -210,6 +259,47 @@ def bg_slot_counter():
         if slot != prev_slot:
             print(f"Slot: {slot}")
             current_validator = blockchain.pos.select_random_validator(f"{slot}")
+
+
+def ping(host):
+    # Option for the number of packets as a function of
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+
+    # Building the command. Ex: "ping -c 1 google.com"
+    command = ['ping', param, '1', host]
+
+    return subprocess.call(command) == 0
+
+
+class Vote:
+    def __init__(self, block, vote, create_slot=None):
+        self.block = block
+        self.vote = vote
+        self.block_id = self.block.id
+        self.block_hash = self.block.hash
+        self.block_prev_hash = self.block.prev_hash
+        if not create_slot:
+            self.create_slot = slot
+        else:
+            self.crete_slot = create_slot
+
+    def serialize(self):
+        return {
+            "block": self.block.serialize(),
+            "vote": self.vote,
+            "create_slot": self.create_slot
+        }
+
+    @classmethod
+    def from_dict(cls, source):
+        return cls(
+            block=Block.from_dict(source.get("block")),
+            vote=source.get("vote"),
+            create_slot=source.get("create_slot")
+        )
+
+    def __str__(self):
+        return json.dumps(self.serialize())
 
 
 try:

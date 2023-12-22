@@ -36,7 +36,7 @@ class ProofOfStake:
         result = {}
         # filer empty ones
         for address, staker in stakers.items():
-            if staker.amount > 1:
+            if staker.amount > 0:
                 result[address] = staker
 
         return result

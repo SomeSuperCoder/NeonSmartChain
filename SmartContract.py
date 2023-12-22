@@ -16,7 +16,7 @@ class SmartContract:
             if "eval" in code or "exec" in code or "import" in code:
                 self.code = ""
             else:
-                self.code = config.sc_code_prefix + self.raw_code + config.sc_code_postfix
+                self.code = config.python_sc_code_prefix + self.raw_code + config.python_sc_code_postfix
 
         else:
             self.code = ""
