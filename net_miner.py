@@ -216,17 +216,19 @@ def get_known_node_list():
 
 def bg_miner():
     global tx_pool
+
     while True:
-        time.sleep(1)
+        if slot % 2 != 0:
+            continue
+        global latest_used_slot
+        if latest_used_slot == slot:
+            continue
+        latest_used_slot = slot
         print("[bold sky_blue3]Scanning for new transactions...")
         validator = blockchain.pos.select_random_validator(based_on=str(slot))
         print(f"Validator: {validator}")
 
         if utils.generate_address(miner_private_key.get_verifying_key()) == validator:
-            global latest_used_slot
-            if latest_used_slot == slot:
-                continue
-            latest_used_slot = slot
             print("[bold green]Adding a block!")
             # double spending protection
             result_pool = []
@@ -261,6 +263,17 @@ def bg_slot_counter():
             current_validator = blockchain.pos.select_random_validator(f"{slot}")
 
 
+def bg_voter():
+    while True:
+        if slot % 2 != 1:
+            continue
+        global latest_used_slot
+        if latest_used_slot == slot:
+            continue
+        latest_used_slot = slot
+        print("[bold yellow]VOTING TIME!")
+
+
 def ping(host):
     # Option for the number of packets as a function of
     param = '-n' if platform.system().lower() == 'windows' else '-c'
@@ -269,6 +282,16 @@ def ping(host):
     command = ['ping', param, '1', host]
 
     return subprocess.call(command) == 0
+
+
+def get_all_votes():
+    result = []
+    for node in known_node_list:
+        data = net_utils.get_data_from_path("/get_vote_list", node, json=True)
+        for vote in data:
+            result.append(vote)
+
+    return remove_expired_votes_from_given_list(result)
 
 
 class Vote:
@@ -281,7 +304,7 @@ class Vote:
         if not create_slot:
             self.create_slot = slot
         else:
-            self.crete_slot = create_slot
+            self.create_slot = create_slot
 
     def serialize(self):
         return {
@@ -302,11 +325,30 @@ class Vote:
         return json.dumps(self.serialize())
 
 
+def remove_expired_votes_from_given_list(some_vote_list: list[Vote]):
+    new_vote_list = []
+    for vote in some_vote_list:
+        if vote.create_slot > slot - config.vote_expire_time:
+            new_vote_list.append(vote)
+    return new_vote_list
+
+
+def remove_invalid_votes_from_given_list(some_vote_list: list[Vote]):
+    new_vote_list = []
+    for vote in some_vote_list:
+        if utils.verify(vote, public_key=vote.by):
+            new_vote_list.append(vote)
+
+    return remove_expired_votes_from_given_list(new_vote_list)
+
+
 try:
     thread2 = threading.Thread(target=bg_slot_counter)
     thread2.start()
     thread = threading.Thread(target=bg_miner)
     thread.start()
+    thread3 = threading.Thread(target=bg_voter)
+    thread3.start()
     app.run(debug=False, port=config.node_port)
 except KeyboardInterrupt:
     blockchain.save()

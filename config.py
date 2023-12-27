@@ -4,7 +4,7 @@ tx_gas_price = 0.01  # TODO: this should be removed
 native_coin_decimals = 2
 stake_amount_weight = 2.5
 stake_time_weight = 1.2
-slot_length = 5  # seconds
+slot_length = 3  # seconds
 node_port = 3152
 stake_minimum = 100  # neon
 vote_expire_time = 10  # slots
@@ -18,6 +18,14 @@ from json import loads, dumps
 message = SmartContract.ExecMessage.from_dict(loads(open("/code/message.json").read()))
 result = SmartContract.ExecResult({}, [], [], message.storage)
 
+class _ImportError(Exception):
+    pass
+
+def __import__(*args, **kwargs):
+    raise _ImportError("Importing is not allowed.")
+
+# Override the built-in __import__ function
+__builtins__.__import__ = __import__
 """
 python_sc_code_postfix = """
 

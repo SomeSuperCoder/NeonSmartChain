@@ -26,7 +26,7 @@ class SmartContract:
 
         self.docs = docs
         self.language = language
-        self.address = "0x" + base58.b58encode(
+        self.address = base58.b58encode(
                 hashlib.sha256(
                     f"{tx_id}{tx_sender}".encode()
                 ).digest()

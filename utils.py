@@ -65,7 +65,7 @@ def verify(target, public_key):
 
 
 def generate_address(public_key: ecdsa.VerifyingKey):
-    return "0x" + base58.b58encode(
+    return base58.b58encode(
         hashlib.sha256(
             public_key.to_der()
         ).digest()
