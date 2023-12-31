@@ -23,9 +23,15 @@ import net_utils
 import utils
 from kivy.utils import platform
 
-#if platform == "android":
-from android.permissions import request_permissions, Permission
-request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+if platform == "android":
+    from android.permissions import request_permissions, Permission
+    request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+    stoarge_dir = os.getenv("EXTERNAL_STORAGE")
+else:
+    storage_dir = "cli_wallet_stuff/"
+
+account_data_file = os.path.join(stoarge_dir, "account.bin")
+    
 
 # Window.size = (480, 800)
 node = "127.0.0.1"
@@ -2145,6 +2151,8 @@ class Wallet(MDApp):
 
     def screen(self, screen_name):
         self.root.current = screen_name
+        #def screen(self, sed):
+    #self.root.ids.screen_manager.current = sed
 
     def file_manager_open(self, file):
         self.manager_open = True
@@ -2242,7 +2250,7 @@ class Wallet(MDApp):
         self.theme_cls.material_style = "M3"
         # self.root.current = 'second_login'
         sm = Builder.load_file("kivy.kv")
-        if os.path.isfile("cli_wallet_stuff/account.bin"):
+        if os.path.isfile(account_data_file):
             sm.current = "login_account_enter_password"
         return sm
 
@@ -2261,7 +2269,7 @@ class Wallet(MDApp):
         global seed_phrase
         password = self.root.ids.login_password_input.text
         try:
-            seed_phrase = data_encrypt.decrypt_text(open("cli_wallet_stuff/account.bin", "r+b").read(), password)
+            seed_phrase = data_encrypt.decrypt_text(open(account_data_file, "r+b").read(), password)
             if not is_seed_phrase(seed_phrase):
                 raise Exception
             do_login_by_seed_phrase()
@@ -2273,18 +2281,27 @@ class Wallet(MDApp):
 
     def create_account(self):
         global seed_phrase
+        print("Bedore here!")
         seed_phrase = generate_random_seed()
-        self.screen('create_account_enter_password')
+        print("After here!")
+        # self.screen('create_account_enter_password')
+        self.root.current = "create_account_enter_password"
+        print("Also here!")
 
     def final_create_account(self):
         global seed_phrase
 
         password = self.root.ids.password_login.text
         # seed_phrase = generate_random_seed()
+        print("Before encrypt!")
         enc_data = data_encrypt.encrypt_text(text=seed_phrase, password=password)
-        open("cli_wallet_stuff/account.bin", "w+b").write(enc_data)
+        print("After encrypt! And before write to file!")
+        open(account_data_file, "w+b").write(enc_data)
+        print("After wirte to file")
         do_login_by_seed_phrase()
+        print("After do login and before refresh balance!")
         self.refresh_balance()
+        print("After refesh balance!")
         self.screen("main_screen")
 
     def login_by_seed_phrase(self):
@@ -2299,7 +2316,7 @@ class Wallet(MDApp):
             MDDialog(title='Неправильная сид фраза', size_hint=(None, None), size=(400, 400)).open()
 
     def logout(self):
-        os.remove("cli_wallet_stuff/account.bin")
+        os.remove(account_data_file)
         self.screen("first_login")
 
     def refresh_balance(self):
