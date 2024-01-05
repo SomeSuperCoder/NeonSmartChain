@@ -1,0 +1,10 @@
+/get_current_blockchain(json blockchain)
+/get_other_node_list(list of ips in json)
+/add_me_to_node_list
+
+/new_transaction <- json transaction, broadcast
+/new_block <- json block, broadcast
+
+/utils/get_balance_of?token,user_address
+/utils/get_sc_docs?sc_address
+/utils/get_sc_storage?sc_address

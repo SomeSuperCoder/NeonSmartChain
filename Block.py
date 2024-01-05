@@ -72,4 +72,4 @@ class Block:
         return the_result
 
     def do_hash(self):
-        self.hash = hashlib.sha256(json.dumps(self.serialize(include_hash=False, include_signature=False)).encode()).hexdigest()
+        self.hash = hashlib.sha512(json.dumps(self.serialize(include_hash=False, include_signature=False)).encode()).hexdigest()

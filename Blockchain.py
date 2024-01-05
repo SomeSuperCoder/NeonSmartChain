@@ -29,7 +29,7 @@ class Blockchain:
 
         return result
 
-    def create_new_block(self, tx_list, private_key: ecdsa.SigningKey):
+    def create_new_block(self, tx_list, private_key: ecdsa.SigningKey = None):
         new_block = Block(
             id=self.get_latest_block_id()+1,
             tx_list=tx_list,
@@ -37,7 +37,9 @@ class Blockchain:
             creator=private_key.get_verifying_key()
         )
         new_block.do_hash()
-        utils.sign(new_block, private_key)
+
+        if private_key:
+            utils.sign(new_block, private_key)
 
         return new_block
 
@@ -51,7 +53,6 @@ class Blockchain:
             prev_hash="0"*64,
             creator=creator_vk
         )
-        print(new_block)
         new_block.do_hash()
         utils.sign(new_block, creator_pk)
         return new_block

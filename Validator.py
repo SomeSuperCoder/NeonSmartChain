@@ -1,5 +1,7 @@
 from copy import copy
 
+import loguru
+
 from Transaction import Transaction
 from Block import Block
 
@@ -23,6 +25,7 @@ class Validator:
         return True
 
     def validate_tx(self, tx: Transaction):
+        # check if the user has enough money
         if tx.amount + tx.gas > utils.get_balance(blockchain=self.blockchain, address=tx.get_sender_address()):
             print("TX Validation failed: not enough money ;(")
             return False
@@ -65,6 +68,7 @@ class Validator:
     def validate_block(self, block: Block):
         a_copy = copy(block)
         a_copy.do_hash()
+
         if block.hash != a_copy.hash:
             print("Block Validation failed: wrong hash")
             return False
@@ -81,12 +85,44 @@ class Validator:
             print("Block Validation failed: signature verification failed")
             return False
 
-        if not all([self.validate_tx(tx) for tx in block.tx_list]):
-            print("Block Validation failed: block contains a fraudulent TX!")
-            return False
+        # old code
+        # if not all([self.validate_tx(tx) for tx in block.tx_list]):
+        #     print("Block Validation failed: block contains a fraudulent TX!")
+        #     return False
 
+        valid_tx_list = []
+        from Blockchain import Blockchain
+
+        for tx in block.tx_list:
+            tmp_blockchain: Blockchain = copy(self.blockchain)
+            tmp_block = tmp_blockchain.create_new_block(valid_tx_list)
+            tmp_blockchain.blocks.append(tmp_block)
+
+            if tmp_blockchain.validator.validate_tx(tx):
+                valid_tx_list.append(tx)
+            else:
+                print("Block Validation failed: block contains a fraudulent TX!")
+                return False
+
+        # in the new update tx results will be stored in the tx itself
         if block.results != block.execute(self.blockchain.get_slice(block.id)):
             print("Block Validation failed: block code execution results do not match the ones sent by the miner")
             return False
 
         return True
+
+    def filter_fraudulent_transaction_from_list(self, tx_list):
+        valid_tx_list = []
+        from Blockchain import Blockchain
+
+        for tx in tx_list:
+            tmp_blockchain: Blockchain = copy(self.blockchain)
+            tmp_block = tmp_blockchain.create_new_block(valid_tx_list)
+            tmp_blockchain.blocks.append(tmp_block)
+
+            if tmp_blockchain.validator.validate_tx(tx):
+                valid_tx_list.append(tx)
+            else:
+                loguru.logger.debug("Found a fraudulent tx!")
+
+        return valid_tx_list

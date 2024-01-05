@@ -30,7 +30,7 @@ def generate_identicon(eth_address, size=8):
 
     # Save and show the generated identicon
     # image.save(f'{eth_address}_identicon.png')
-    image.show()
+    return image
 
 
 eth_address = input("Enter the Ethereum wallet address: ").strip()

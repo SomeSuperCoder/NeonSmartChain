@@ -30,7 +30,7 @@ class ProofOfStake:
                                           time=staker.time+1)
 
             staker = stakers.get(block.get_creator_address()) or Staker(amount=0, time=1)
-            stakers[block.get_creator_address()] = Staker(amount=staker.amount + staker.amount ** (1. / 5),
+            stakers[block.get_creator_address()] = Staker(amount=staker.amount + staker.amount ** (1. / config.miner_earn),
                                                           time=1)
 
         result = {}
@@ -54,14 +54,14 @@ class ProofOfStake:
 
         address_list = list(weight_map.keys())
         weight_list = list(weight_map.values())
-        print("Lists")
-        print(address_list)
-        print(weight_list)
+        # print("Lists")
+        # print(address_list)
+        # print(weight_list)
 
         try:
             return random.choices(population=address_list, weights=weight_list, k=1)[0]
         except IndexError:
-            return "0x7Cmg3rA1FSvho4acs6fFeZrPXhEHo2h99T1xMnodwn6o"
+            return config.super_address
 
 
 class Staker:

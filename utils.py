@@ -5,6 +5,14 @@ import ecdsa
 import config
 import Transaction
 
+from mnemonic import Mnemonic
+
+
+def generate_seed_phrase():
+    mnemonic = Mnemonic("english")
+    seed_phrase = mnemonic.generate(strength=128)
+    return seed_phrase
+
 
 def get_balance(blockchain, address):
     balance = 0
@@ -16,7 +24,7 @@ def get_balance(blockchain, address):
             balance -= tx.amount
             balance -= tx.gas
 
-    if address == "0x7Cmg3rA1FSvho4acs6fFeZrPXhEHo2h99T1xMnodwn6o":
+    if address == config.super_address:
         balance += 10_000
 
     return round(balance, config.native_coin_decimals)
@@ -38,7 +46,7 @@ def send(id, private_key: ecdsa.SigningKey, to, amount, message):
 
 
 # =====================================================
-# ecdsa stuff
+# ECDSA stuff
 
 def sign(target, private_key):
     # print(f"Signing: {json.dumps(target.serialize(include_signature=False))}")
@@ -47,12 +55,12 @@ def sign(target, private_key):
     # print(signature)
     signature_string = base58.b58encode(signature).decode()
 
-    target.signature = signature_string
+    target.signature = ecdsa.util.sigdecode_string(signature, ecdsa.SECP256k1.order)
 
 
 def verify(target, public_key):
     try:
-        signature_bytes = base58.b58decode(target.signature.encode())
+        signature_bytes = ecdsa.util.sigencode_string(target.signature[0], target.signature[1], ecdsa.SECP256k1.order)
         # print(signature_bytes)
         # print(f"Verifying: {json.dumps(target.serialize(include_signature=False))}")
         # print(f"With: {public_key}")
@@ -70,14 +78,6 @@ def generate_address(public_key: ecdsa.VerifyingKey):
             public_key.to_der()
         ).digest()
     ).decode()
-
-
-# def generate_serializable_address(target):
-#     return "0x" + base58.b58encode(
-#         hashlib.sha256(
-#             json.dumps(target.serialize(False)).encode()
-#         ).digest()
-#     ).decode()
 
 
 def private_key_from_seed_phrase(string):

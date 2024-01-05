@@ -6,6 +6,8 @@ import utils
 import os
 import Transaction
 
+from RestrictedPython import compile_restricted
+from RestrictedPython import safe_globals
 
 class SmartContract:
     def __init__(self, code, tx_id, tx_sender, language="python", nonce=0, docs=""):
@@ -13,7 +15,7 @@ class SmartContract:
         self.raw_code = code
 
         if language == "python":
-            if "eval" in code or "exec" in code or "import" in code:
+            if "eval" in code or "exec" in code or "import" in code or "open" in code:
                 self.code = ""
             else:
                 self.code = config.python_sc_code_prefix + self.raw_code + config.python_sc_code_postfix
@@ -32,23 +34,25 @@ class SmartContract:
                 ).digest()
             ).decode()
 
-        print("The code is:")
-        print(self.code)
-        print("==========================================")
-
     def execute(self, message):
         with open("sc_code.py", "w") as file:
             file.write(self.code)
         with open("message.json", "w") as file:
             file.write(message.serialize())
-        with open("message.json", "w") as file:
-            file.write(message.serialize())
 
-        if self.language == "python":
-            os.system("docker run --rm --name sc_run -v \"$(pwd)/result:/result\" -v \"$(pwd):/code:ro\" neon_vm")
+        # if self.language == "python":
+        #     os.system("docker run --rm --name sc_run -v \"$(pwd)/result:/result\" -v \"$(pwd):/code:ro\" neon_vm")
+
+        os.system("python3 sc_code.py")
 
         with open("result/result.json", "r") as file:
-            return ExecResult.from_dict(json.loads(file.read()))
+            return_data = ExecResult.from_dict(json.loads(file.read()))
+
+        os.remove("sc_code.py")
+        os.remove("message.json")
+        # TODO: uncomment at production
+        # os.remove("result/result.json")
+        return return_data
 
     def serialize(self, strict=True):
         return {

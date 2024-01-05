@@ -1,0 +1,13 @@
+{
+    "blocks": [
+        {
+            "id": 0,
+            "tx_list": [],
+            "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "creator": "PZ8Tyr4Nx8MHsRAGMpZmZ6TWY63dXWSCwqxr1zAuA59tPf2gapTgf43SegbtfcEYcrMqJ5jowpyHt4rJNVcLVDvxWaQJwdkeeXoR8DnT3B9i7TucaA8oQrJt",
+            "signature": "4GZyomWmak1sfqTXmPYJddMAHkbb8LZjbFHTQXfzxd5SESCKb9PBbEo7wLuVFi6njwrX3DxDopgijoguUNdC46V",
+            "hash": "12658819e75ae76e1794395210ab8596d5a31c76c307c0f525ac0ced2eebe999cdc2c287e1ac41843755a1af645d18093f4e02f2b90f3ef1cadad2cb3b86dee6",
+            "results": []
+        }
+    ]
+}

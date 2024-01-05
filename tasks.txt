@@ -1,0 +1,4 @@
+1) fix info looping! (check if set length changed)
+2) Implement gas! (the same as Ethereum)
+9) Add Lua and Golang smart contracts
+10) Advanced block creation
