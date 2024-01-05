@@ -1,5 +1,5 @@
 base58==2.1.1
 ecdsa==0.18.0
-pycryptodome==3.19.0
+pycryptodome==3.19.1
 mnemonic
 loguru
